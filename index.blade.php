@@ -27,22 +27,19 @@
     <!-- Style css -->
     <link rel="stylesheet" href="{{asset('public/assets/frontend/css/nice-select.css')}}">
     <link rel="stylesheet" href="{{asset('public/assets/frontend/plyr/plyr.css')}}">
-    <link rel="stylesheet" href="{{asset('public/assets/frontend/css/own.css')}}">
     <link href="{{asset('public/assets/frontend/leafletjs/leaflet.css')}}" rel="stylesheet">
     <link href="{{asset('public/assets/frontend/toaster/toaster.css')}}" rel="stylesheet">
 
     <link href="{{asset('public/assets/frontend/css/plyr_cdn_dw.css')}}" rel="stylesheet">
-    <link href="{{asset('public/assets/frontend/css/tagify.css')}}" rel="stylesheet">
 
     <link href="{{asset('public/assets/frontend/uploader/jquery.uploader.css')}}" rel="stylesheet">
-    <link href="{{asset('public/assets/frontend/css/jquery-rbox.css')}}" rel="stylesheet">
 
-   {{--  <link rel="stylesheet" href="{{ asset('public/assets/frontend/css/richtext.min.css') }}">  --}}
-   <link rel="stylesheet" href="{{ asset('public/assets/frontend/summernote-0.8.18-dist/summernote-lite.min.css') }}">
+   <link rel="stylesheet" href="{{ asset('public/assets/frontend/css/richtext.min.css') }}">
 
-    <link rel="stylesheet" href="{{asset('public/assets/frontend/css/bootstrap.min.css')}}">
     <link rel="stylesheet" href="{{asset('public/assets/frontend/css/style.css')}}">
-    
+
+    <link rel="stylesheet" href="{{asset('public/assets/frontend/css/own.css')}}">
+    <script src="{{asset('public/assets/frontend/js/jquery-3.6.0.min.js')}}"></script>
     
    
 
@@ -78,9 +75,9 @@
     <!-- Common modals -->
     @include('frontend.modal')
 
+
     <!--Javascript
     ========================================================-->
-    <script src="{{asset('public/assets/frontend/js/jquery-3.6.0.min.js')}}"></script>
     <script src="{{asset('public/assets/frontend/js/bootstrap.bundle.min.js')}}"></script>
     <script src="{{asset('public/assets/frontend/js/owl.carousel.min.js')}}"></script>
     <script src="{{asset('public/assets/frontend/js/venobox.min.js')}}"></script>
@@ -100,17 +97,14 @@
     <script src="{{asset('public/assets/frontend/js/foundation.min.js')}}"></script>
     <script src="{{asset('public/assets/frontend/js/modernizr.min.js')}}"></script>
 
-    <script src="{{asset('public/assets/frontend/js/jQuery.tagify.min.js')}}"></script>
-    <script src="{{asset('public/assets/frontend/js/jquery-rbox.js')}}"></script>
-
 
     <script src="{{asset('public/assets/frontend/js/plyr_cdn_dw.js')}}"></script>
 
     <script src="{{ asset('public/js/share.js') }}"></script>
 
     <script src="{{asset('public/assets/frontend/uploader/jquery.uploader.min.js')}}"></script>
-
-    <script src="{{ asset('public/assets/frontend/summernote-0.8.18-dist/summernote-lite.min.js') }}"></script>
+    
+    <script src="{{ asset('public/assets/frontend/js/jquery.richtext.js') }}"></script>
     
     <script src="{{asset('public/assets/frontend/js/initialize.js')}}"></script>
 
@@ -125,17 +119,9 @@
     @include('frontend.initialize')
     
     <script>
-        
-        $(document).ready(function() {
-            $('[name=tag]').tagify({
-                duplicates :false
-            });
-        });
+        $('.content').richText();
     </script>
-
     
 </body>
 
 </html>
-
-

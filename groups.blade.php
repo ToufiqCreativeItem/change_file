@@ -2,7 +2,7 @@
     <div class="col-lg-7">
         <div class="group-inner bg-white border rounded p-3">
             <div class="gr-search">
-                <h3 class="h6"><span><i class="fa-solid fa-users"></i></span>{{ __('Group') }} </h3>
+                <h3 class="h6"><span><i class="fa-solid fa-users"></i></span>Group </h3>
                 <form action="{{ route('search.group') }}" method="GET">
                     <input type="text" class="bg-secondary rounded" name="search" value="@if(isset($_GET['search'])) {{ $_GET['search'] }} @endif" placeholder="Search Group">
                     <span class="i fa fa-search"></span>
@@ -15,19 +15,15 @@
                         @foreach ($groups as $group)
                             <div class="col-md-4 col-lg-4 col-sm-6">
                                 <div class="card p-2 rounded">
-                                    <div class="mb-2"> <img class="img-fluid img-radisu" src="{{ get_group_logo($group->logo,'logo') }}" ></div>
+                                    <div class="mb-2 thumbnail-103-103" style="background-image: url('{{ get_group_logo($group->logo,'logo') }}');"></div>
                                     <a href="{{ route('single.group',$group->id) }}"><h4>{{ ellipsis($group->title,10) }}</h4></a>
                                     @php $joined = \App\Models\Group_member::where('group_id',$group->id)->where('is_accepted','1')->count(); @endphp
-                                    <span class="small text-muted">{{ $joined }} {{ __('Member') }}{{ $joined>1?"s":"" }}</span>
+                                    <span class="small text-muted">{{ $joined }} Member{{ $joined>1?"s":"" }}</span>
                                     @php $join = \App\Models\Group_member::where('group_id',$group->id)->where('user_id',auth()->user()->id)->count(); @endphp
                                     @if ($join>0)
-                                        @if ($group->user_id==auth()->user()->id)
-                                            <a href="javascript:void(0)" class="btn btn-secondary">{{ __('Admin') }}</a>
-                                        @else
-                                            <a href="javascript:void(0)" onclick="ajaxAction('<?php echo route('group.rjoin',$group->id); ?>')" class="btn btn-secondary">{{ __('Joined') }}</a>
-                                        @endif
+                                    <a href="javascript:void(0)" onclick="ajaxAction('<?php echo route('group.rjoin',$group->id); ?>')" class="btn btn-secondary">Joined</a>
                                     @else
-                                        <a href="javascript:void(0)" onclick="ajaxAction('<?php echo route('group.join',$group->id); ?>')" class="btn btn-primary">{{ __('Join') }}</a>
+                                        <a href="javascript:void(0)" onclick="ajaxAction('<?php echo route('group.join',$group->id); ?>')" class="btn btn-primary">Join</a>
                                     @endif
                                 </div>
                             </div>
@@ -35,7 +31,7 @@
                     </div>
                 </div>
                 @if (count($groups)>15)
-                    <a href="{{ route('all.group.view') }}" class="btn btn-secondary btn-lg d-block mt-3">{{ __('See More') }}</a>
+                    <a href="{{ route('all.group.view') }}" class="btn btn-secondary btn-lg d-block mt-3">See More</a>
                 @endif
             </div>
         </div>

@@ -95,7 +95,6 @@ class MainController extends Controller
 
         $page_data['user_info'] = $this->user;
         $page_data['posts'] = $posts;
-        $page_data['type'] = 'user_post';
         return view('frontend.main_content.posts', $page_data);
     }
 
@@ -113,8 +112,7 @@ class MainController extends Controller
         if (is_array($request->multiple_files) && $request->multiple_files[0] != null) {
             //Data validation
 
-            $rules = array('multiple_files.*' => 'mimes:jpeg,png,jpg,gif,svg,mp4,mov,wmv,avi,WEBM|max:20480');
-            // $rules = array('multiple_files.*' => 'mimes:mp4,mov,wmv,avi,WEBM,mkv|max:20048');
+            $rules = array('multiple_files.*' => 'mimes:jpeg,png,jpg,gif,svg,mp4,webm,mov,ogv|max:2048',);
             $validator = Validator::make($request->all(), $rules);
             if ($validator->fails()) {
                 $validation_errors = $validator->getMessageBag()->toArray();
@@ -197,7 +195,7 @@ class MainController extends Controller
         if (is_array($request->multiple_files) && $request->multiple_files[0] != null) {
             //Data validation
 
-            $rules = array('multiple_files.*' => 'mimes:jpeg,png,jpg,gif,svg,mp4,mov,wmv,avi,WEBM|max:20480',);
+            $rules = array('multiple_files.*' => 'mimes:jpeg,png,jpg,gif,svg|max:2048',);
             $validator = Validator::make($request->all(), $rules);
             if ($validator->fails()) {
                 $validation_errors = $validator->getMessageBag()->toArray();
@@ -518,7 +516,7 @@ class MainController extends Controller
         $page_data['post_id'] = $form_data['post_id'];
 
         $total_comments = Comments::where('is_type', $form_data['type'])->where('id_of_type', $form_data['post_id'])->get()->count();
-
+        
         if ($request->parent_id == 0) {
             $page_data['comments'] = $comments;
             return view('frontend.main_content.comments', $page_data);
@@ -532,12 +530,7 @@ class MainController extends Controller
     {
 
         //Previw post
-        $posts =  Posts::where(function ($query) {
-            $query->whereJsonContains('users.friends', [$this->user->id])
-                ->where('posts.privacy', '!=', 'private')
-                ->orWhere('posts.user_id', $this->user->id);
-        })
-            ->where('posts.post_id', $request->post_id)
+        $posts =  Posts::where('posts.post_id', $request->post_id)
             ->where('posts.status', 'active')
             ->join('users', 'posts.user_id', '=', 'users.id')
             ->select('posts.*', 'users.name', 'users.photo', 'users.friends', 'posts.created_at as created_at')
@@ -566,16 +559,10 @@ class MainController extends Controller
     public function single_post($id)
     {
         $post =  Posts::where('post_id', $id)->first();
-        if(!empty($post)){
-            $page_data['post'] = $post;
-            $page_data['user_info'] = auth()->user();
-            $page_data['type'] = 'user_post';
-            $page_data['view_path'] = 'frontend.main_content.single-post';
-            return view('frontend.index', $page_data);
-        }else{
-            return back();
-        }
-        
+        $page_data['post'] = $post;
+        $page_data['user_info'] = auth()->user();
+        $page_data['view_path'] = 'frontend.main_content.single-post';
+        return view('frontend.index', $page_data);
     }
 
 
@@ -699,7 +686,6 @@ class MainController extends Controller
     public function custom_shared_post_view($id)
     {
         $page_data['post'] = Posts::where('post_id', $id)->first();
-        $page_data['type'] = 'user_post';
         return view('frontend.main_content.custom_shared_view', $page_data);
     }
 }
