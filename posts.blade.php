@@ -22,7 +22,6 @@
 
     <div class="single-item-countable single-entry" id="postIdentification{{ $post->post_id }}">
         <div class="entry-inner">
-            
             <div class="entry-header d-flex justify-content-between">
                 <div class="ava-info d-flex align-items-center">
                     @if (isset($type)&&$type=="page")
@@ -55,11 +54,11 @@
                                 </a>
                                 <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                                     <li><a class="dropdown-item" href="#"><img src="{{ asset('public/assets/frontend/images/save.png') }}" alt="">
-                                            {{ __('Save Video') }}</a></li>
-                                    <li><a class="dropdown-item" href="#"><img src="{{ asset('public/assets/frontend/images/link.png') }}" alt="">{{ __('Copy
-                                        Link') }}</a></li>
+                                            Save Video</a></li>
+                                    <li><a class="dropdown-item" href="#"><img src="{{ asset('public/assets/frontend/images/link.png') }}" alt="">Copy
+                                            Link</a></li>
                                     <li><a class="dropdown-item" href="#"><img src="{{ asset('public/assets/frontend/images/report.png') }}"
-                                                alt="">{{ __('Report') }} </a></li>
+                                                alt="">Report </a></li>
                                 </ul>
                             </div>
                         </div>
@@ -85,14 +84,18 @@
                                             $follow = \App\Models\Follower::where('user_id',$post->user_id)->where('follow_id',$post->user_id)->count();
                                         @endphp
                                         @if ($follow>0)
-                                            <a href="javascript:void(0)" onclick="ajaxAction('<?php echo route('user.unfollow',$post->user_id); ?>')">{{ __('Unfollow') }}</a> 
+                                            <a href="javascript:void(0)" onclick="ajaxAction('<?php echo route('user.unfollow',$post->user_id); ?>')">Unfollow</a> 
                                         @else
-                                            <a href="javascript:void(0)" onclick="ajaxAction('<?php echo route('user.follow',$post->user_id); ?>')">{{ __('Follow') }}</a> 
+                                            <a href="javascript:void(0)" onclick="ajaxAction('<?php echo route('user.follow',$post->user_id); ?>')">Follow</a> 
                                         @endif
                                     @endif
                                 </a>
                             @endif
                             <!-- Check tagged users -->
+
+                            @if($post->post_type == 'cover_photo')
+                                <small class="text-muted">{{get_phrase('has changed cover photo')}}</small>
+                            @endif
 
                             @if($post->post_type == 'live_streaming')
                                 <small class="text-muted">{{get_phrase('is live now')}}</small>
@@ -174,25 +177,49 @@
                     </div>
                 </div>
 
-                @if($post->post_type == 'general' || $post->post_type == 'profile_picture')
+                @if($post->post_type == 'general' || $post->post_type == 'profile_picture' || $post->post_type == 'cover_photo')
                     
                     <div class="row" id="postMediaSection{{ $post->post_id }}">
                         <div class="col-12">
                             <div class="photos-gallery">
                                 @php $media_files = DB::table('media_files')->where('post_id', $post->post_id)->get(); @endphp
                                     @php $media_files_count = count($media_files); @endphp
-                                    @foreach($media_files as $media_file)
+
+                                    <!-- break after loaded 5 images -->
+                                    @php $more_unloaded_images = $media_files_count - 6; @endphp
+
+                                    @foreach($media_files as $key => $media_file)
+
+                                        @php if($key == 6) break; @endphp
+
                                         @if($media_file->file_type == 'video')
                                             @if(File::exists('public/storage/post/videos/'.$media_file->file_name))
-                                                <a onclick="showCustomModal('{{route('preview_post', ['post_id' => $post->post_id, 'file_name' => $media_file->file_name])}}', '{{get_phrase('Preview')}}', 'xxl')" href="javascript:void(0)"><video muted controlsList="nodownload" controls class="plyr-js w-100 rounded video-thumb">
-                                                    <source src="{{get_post_video($media_file->file_name)}}" type="">
-                                                </video></a>
+                                                <a class="position-relative" onclick="showCustomModal('{{route('preview_post', ['post_id' => $post->post_id, 'file_name' => $media_file->file_name])}}', '{{get_phrase('Preview')}}', 'xxl')" href="javascript:void(0)">
+                                                    <video muted controlsList="nodownload" controls class="plyr-js w-100 rounded video-thumb">
+                                                        <source src="{{get_post_video($media_file->file_name)}}" type="">
+                                                    </video>
+
+                                                    @if($more_unloaded_images > 0 && $key == 5)
+                                                        <div class="more_image_overlap"><i class="fa-solid fa-plus"></i> {{get_phrase('____ photos', [$more_unloaded_images])}}</div>
+                                                    @endif
+                                                </a>
                                             @endif
                                         @else
-                                            <div class="picture"> 
-                                                <a onclick="showCustomModal('{{route('preview_post', ['post_id' => $post->post_id, 'file_name' => $media_file->file_name])}}', '{{get_phrase('Preview')}}', 'xxl')" href="javascript:void(0)"><img src="{{get_post_image($media_file->file_name)}}" class="w-100" alt=""></a>
+                                            <div class="picture bg-dark"> 
+                                                <a class="position-relative" onclick="showCustomModal('{{route('preview_post', ['post_id' => $post->post_id, 'file_name' => $media_file->file_name])}}', '{{get_phrase('Preview')}}', 'xxl')" href="javascript:void(0)">
+
+                                                    @if($more_unloaded_images > 0 && $key == 5)
+                                                        @php $opacity = 'opacity-7'; @endphp
+                                                        <div class="more_image_overlap"><i class="fa-solid fa-plus"></i> {{get_phrase('____ photos', [$more_unloaded_images])}}</div>
+                                                    @else
+                                                        @php $opacity = ''; @endphp
+                                                    @endif
+
+                                                    <img src="{{get_post_image($media_file->file_name)}}" class="w-100 h-100 {{ $opacity }}" alt="">
+                                                </a>
                                             </div>
                                         @endif
+
                                     @endforeach
                                 </div>
                         </div>

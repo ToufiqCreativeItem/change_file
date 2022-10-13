@@ -38,7 +38,7 @@ class Profile extends Controller
             ->select('posts.*', 'users.name', 'users.photo', 'users.friends', 'posts.created_at as created_at')
             ->take(5)->orderBy('posts.post_id', 'DESC')->get();
 
-
+        
 
 
         $page_data['posts'] = $posts;
@@ -63,7 +63,6 @@ class Profile extends Controller
 
         $page_data['posts'] = $posts;
         $page_data['user_info'] = $this->user;
-        $page_data['type'] = 'user_post';
         return view('frontend.main_content.posts', $page_data);
     }
 
@@ -95,16 +94,13 @@ class Profile extends Controller
 
         $all_photos = Media_files::where('user_id', $this->user->id)
             ->where('file_type', 'image')
-            ->whereNull('story_id')
-            ->whereNull('product_id')
             ->whereNull('page_id')
-            ->whereNull('group_id')
-            ->whereNull('chat_id')
-            ->orderBy('id', 'DESC')->get();
+            ->whereNull('album_id')
+            ->whereNull('product_id')
+            ->take(20)->orderBy('id', 'DESC')->get();
 
         $all_albums = Albums::where('user_id', $this->user->id)
             ->whereNull('page_id')
-            ->whereNull('group_id')
             ->take(6)->orderBy('id', 'DESC')->get();
 
         $page_data['all_photos'] = $all_photos;
@@ -118,11 +114,9 @@ class Profile extends Controller
     {
         $all_photos = Media_files::where('user_id', $this->user->id)
             ->where('file_type', 'image')
-            ->whereNull('story_id')
-            ->whereNull('product_id')
             ->whereNull('page_id')
-            ->whereNull('group_id')
-            ->whereNull('chat_id')
+            ->whereNull('album_id')
+            ->whereNull('product_id')
             ->skip($request->offset)->take(12)->orderBy('id', 'DESC')->get();
 
         $page_data['all_photos'] = $all_photos;
@@ -194,7 +188,6 @@ class Profile extends Controller
     {
         $all_albums = Albums::where('user_id', $this->user->id)
             ->whereNull('page_id')
-            ->whereNull('group_id')
             ->skip($request->offset)->take(20)->orderBy('id', 'DESC')->get();
 
         $page_data['all_albums'] = $all_albums;
@@ -254,7 +247,7 @@ class Profile extends Controller
 
     function accept_friend_request(Request $request)
     {
-
+        
         $response = array();
 
         $is_updated = Friendships::where('accepter', $this->user->id)
@@ -266,7 +259,11 @@ class Profile extends Controller
             //update my friends id to my friend list
             $my_friends = Users::where('id', $this->user->id)->value('friends');
             $my_friends = json_decode($my_friends);
-            array_push($my_friends, (int)$request->user_id);
+            if(is_array($my_friends)){
+                array_push($my_friends, (int)$request->user_id);
+            }else{
+                $my_friends = [(int)$request->user_id];
+            }
             $my_friends = json_encode($my_friends);
 
             Users::where('id', $this->user->id)->update(['friends' => $my_friends]);
@@ -275,10 +272,24 @@ class Profile extends Controller
             //update my id to my friend list
             $my_friends_of_friends = Users::where('id', $request->user_id)->value('friends');
             $my_friends_of_friends = json_decode($my_friends_of_friends);
-            array_push($my_friends_of_friends, (int)$this->user->id);
+
+            if(is_array($my_friends_of_friends)){
+                array_push($my_friends_of_friends, (int)$this->user->id);
+            }else{
+                $my_friends_of_friends = [(int)$this->user->id];
+            }
             $my_friends_of_friends = json_encode($my_friends_of_friends);
 
             Users::where('id', $request->user_id)->update(['friends' => $my_friends_of_friends]);
+
+
+            //Send notification
+            Notification::where('sender_user_id',(int)$request->user_id)->where('reciver_user_id',$this->user->id)->update(['status'=>'1','view'=>'1']);
+            $notify = new Notification();
+            $notify->sender_user_id = auth()->user()->id;
+            $notify->reciver_user_id = (int)$request->user_id;
+            $notify->type = "friend_request_accept";
+            $notify->save();
 
             $response = array('alertMessage' => get_phrase('Friend request accepted'), 'showElem' => "#friendRequestAcceptedBtn$request->user_id", 'hideElem' => "#friendRequestConfirmBtn$request->user_id");
         }
@@ -330,9 +341,12 @@ class Profile extends Controller
 
             $is_updated = Users::where('id', $this->user->id)->update($data);
 
-            $page_data['user_info'] = Users::where('id', $this->user->id)->first();
-            $user_frofile_info = view('frontend.profile.my_info', $page_data)->render();
-            $response = array('hideCustomModal' => 1, 'elemSelector' => '#my-profile-info', 'content' => $user_frofile_info, 'alertMessage' => get_phrase('Profile info updated'));
+            if ($is_updated > 0) {
+                $page_data['user_info'] = Users::where('id', $this->user->id)->first();
+
+                $user_frofile_info = view('frontend.profile.my_info', $page_data)->render();
+                $response = array('hideCustomModal' => 1, 'elemSelector' => '#my-profile-info', 'content' => $user_frofile_info, 'alertMessage' => get_phrase('Profile info updated'));
+            }
         }
 
         return json_encode($response);
@@ -367,6 +381,8 @@ class Profile extends Controller
             //Update to database
             $data['cover_photo'] = $file_name;
             Users::where('id', $this->user->id)->update($data);
+
+            $this->create_cover_photo_post($request->cover_photo, $file_name);
 
             //Ajax flush message
             Session::flash('success_message', get_phrase('Cover photo updated'));
@@ -451,6 +467,43 @@ class Profile extends Controller
         $data['publisher'] = 'post';
         $data['publisher_id'] = $this->user->id;
         $data['post_type'] = 'profile_picture';
+        $data['tagged_user_ids'] = json_encode(array());
+        $data['activity_id'] = 0;
+        $data['location'] = '';
+        $data['description'] = '';
+        $data['status'] = 'active';
+        $data['user_reacts'] = json_encode(array());
+        $data['created_at'] = time();
+        $data['updated_at'] = $data['created_at'];
+        $post_id = Posts::insertGetId($data);
+
+        //Stored to media files table 
+        $media_file_data = array('user_id' => $this->user->id, 'post_id' => $post_id, 'file_name' => $file_name, 'file_type' => 'image', 'privacy' => 'public');
+        $media_file_data['created_at'] = time();
+        $media_file_data['updated_at'] = $media_file_data['created_at'];
+        Media_files::create($media_file_data);
+    }
+
+    function create_cover_photo_post($image, $file_name)
+    {
+
+        //Image optimization
+        Image::make($image->path())->orientate()->resize(800, null, function ($constraint) {
+            $constraint->upsize();
+            $constraint->aspectRatio();
+        })->save(public_path() . '/storage/post/images/' . $file_name);
+
+        //Ultra Image optimization
+        Image::make($image->path())->orientate()->fit(150, 150, function ($constraint) {
+            $constraint->upsize();
+            $constraint->aspectRatio();
+        })->save(public_path() . '/storage/post/images/optimized/' . $file_name);
+
+        $data['user_id'] = $this->user->id;
+        $data['privacy'] = 'public';
+        $data['publisher'] = 'post';
+        $data['publisher_id'] = $this->user->id;
+        $data['post_type'] = 'cover_photo';
         $data['tagged_user_ids'] = json_encode(array());
         $data['activity_id'] = 0;
         $data['location'] = '';

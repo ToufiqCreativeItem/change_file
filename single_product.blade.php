@@ -2,20 +2,22 @@
     <div class="product-header row">
         <div class="col-lg-6">
             <div id="carouselExampleIndicators" class="carousel slide product-slider"
-                data-bs-ride="false">
+                data-bs-ride="carousel">
                 
                 <div class="carousel-indicators">
                     @foreach ($product_image as $image )
                         <button type="button" data-bs-target="#carouselExampleIndicators"
                         data-bs-slide-to="{{ $loop->index }}" class="{{ $loop->index=='0'? "active":"" }}" aria-current="true"
-                        aria-label="Slide {{ $loop->index+1 }}"><img class="w-55 custome-height-50" src="{{ get_product_image($image->file_name,"thumbnail") }}" alt=""></button>
+                        aria-label="Slide {{ $loop->index+1 }}">
+                            <img class="w-55 custome-height-50 rounded-10px" src="{{ get_product_image($image->file_name,"thumbnail") }}" alt="">
+                        </button>
                         {{--  indicator images  need  here  --}}
                     @endforeach
                 </div>
                 <div class="carousel-inner">
                     @foreach ($product_image as $image )
-                        <div class="carousel-item {{ $loop->index=='0'? "active":"" }}"  onclick="showCustomModal('{{route('load_modal_content', ['view_path' => 'frontend.marketplace.load_image', 'image' => $image->file_name])}}', '');">
-                            <img class="rounded w-100" src="{{ get_product_image($image->file_name,"coverphoto") }}" alt=""> 
+                        <div class="carousel-item {{ $loop->index=='0'? "active":"" }}">
+                            <img class="rounded w-100 rounded-10px" src="{{ get_product_image($image->file_name,"coverphoto") }}" alt=""> 
                         </div>
                     @endforeach
                 </div>
@@ -104,5 +106,3 @@
     </div>
 </div>
 @endif
-
-
